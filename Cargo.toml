@@ -10,6 +10,7 @@ members = [
     "crates/omnigraph",
     "crates/omnigraph-reference-engine",
     "crates/omnigraph-cli",
+    "crates/q10-harness",
     "crates/omnigraph-api-types",
     "crates/omnigraph-cluster",
     "crates/omnigraph-azure-admission",
