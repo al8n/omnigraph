@@ -2223,8 +2223,27 @@ fn projection_pushdown(
             demands.entry(binding).or_default().identity = true;
         }
     }
+    let mut block_nodes: Vec<LogicalId> = plan
+        .live()
+        .filter_map(|(_, node)| match node {
+            LogicalNode::AntiJoin { inner, .. } => Some(*inner),
+            _ => None,
+        })
+        .collect();
+    let mut in_block = HashSet::new();
+    while let Some(id) = block_nodes.pop() {
+        if in_block.insert(id) {
+            block_nodes.extend(plan.node(id).map(LogicalNode::inputs).unwrap_or_default());
+        }
+    }
     for (id, binding, node_type) in scans {
         let demand = demands.get(&binding);
+        if !in_block.contains(&id)
+            && let Some(input) = redundant_destination(plan, id, demand, &node_type.columns.id)
+        {
+            plan.splice_out(id, input);
+            continue;
+        }
         let whole_object = demand.map_or_else(
             || {
                 matches!(
@@ -2266,6 +2285,53 @@ fn projection_pushdown(
         }
     }
     Ok(true)
+}
+
+/// The expansion under a traversal destination scan that can be dropped:
+/// unfiltered, its binding read for nothing beyond its id, which the
+/// expansion already carries, outside any correlated block, over one named
+/// directed edge type, which fixes the destination type. Endpoint integrity
+/// (inserts check endpoints, node deletes cascade to their edges) means
+/// every destination the expansion reaches exists, so the scan neither adds
+/// a needed column nor removes a row.
+fn redundant_destination(
+    plan: &LogicalPlan,
+    id: LogicalId,
+    demand: Option<&Demand>,
+    id_column: &str,
+) -> Option<LogicalId> {
+    let Some(LogicalNode::TableScan {
+        input: Some(input),
+        spec,
+    }) = plan.node(id)
+    else {
+        return None;
+    };
+    let Some(LogicalNode::Expand {
+        dst,
+        edges,
+        min_hops,
+        ..
+    }) = plan.node(*input)
+    else {
+        return None;
+    };
+    let unread = demand.is_some_and(|demand| {
+        !demand.entity
+            && demand
+                .properties
+                .iter()
+                .all(|property| property == id_column)
+    });
+    (unread
+        && spec.filter.is_none()
+        && spec.runtime_filter.is_none()
+        && spec.binding.as_ref() == Some(dst)
+        && *min_hops >= 1
+        && edges
+            .named()
+            .is_some_and(|member| member.direction != Direction::Both))
+    .then_some(*input)
 }
 
 /// What one binding's scan must read, gathered from every node of the tree.

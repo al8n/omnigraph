@@ -312,6 +312,23 @@ impl Requirements {
                     spec.binding.as_deref() == Some(name.as_str())
                         && spec.table.node_type_name() == Some(type_name.as_str())
                 }
+                // A destination whose scan the planner dropped: one named
+                // directed edge type fixes its type.
+                (
+                    Some(PhysicalNode::Expand {
+                        dst,
+                        dst_type,
+                        edges,
+                        ..
+                    }),
+                    BoundVariable::Node { type_name },
+                ) => {
+                    dst == name
+                        && dst_type == type_name
+                        && edges.named().is_some_and(|member| {
+                            member.direction != omnigraph_compiler::types::Direction::Both
+                        })
+                }
                 (
                     Some(PhysicalNode::Expand {
                         edge_binding: Some(edge),
