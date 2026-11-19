@@ -664,7 +664,15 @@ impl Lower for Walk<'_, '_> {
             ))
             .into());
         }
-        let join = HashJoinExec::try_new(probe, build, fields.fallback, lookup)?;
+        // The destination table's row count at the pinned snapshot: the
+        // manifest count the planner's access-path rule read
+        // (`QuerySource::node_type`), so the run weighs its probe against the
+        // number the plan was chosen with.
+        let destination_rows = lookup
+            .snapshot
+            .dataset(&fields.spec.table.type_key)
+            .map(|entry| entry.entity_count);
+        let join = HashJoinExec::try_new(probe, build, fields.fallback, destination_rows, lookup)?;
         self.built(id, join)
     }
 
