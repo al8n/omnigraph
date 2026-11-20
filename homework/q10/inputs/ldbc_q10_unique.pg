@@ -1,0 +1,47 @@
+// LDBC SNB Interactive v1 SF1: the four node types and three edge types
+// that Q10 reads. Properties mirror graph-benchmark-ldbc's
+// ladybugdb/etl/schema.cypher for these tables, so every CSV column loads.
+// Tag.name carries @index, matching Ladybug's ART index on Tag(name).
+// Fields that are empty in the CSVs are nullable (image posts have no
+// language or content; text posts have no imageFile).
+
+node Person {
+  id: I64 @key
+  firstName: String
+  lastName: String
+  gender: String
+  birthday: Date
+  creationDate: DateTime
+  locationIP: String
+  browserUsed: String
+}
+
+node Post {
+  id: I64 @key
+  imageFile: String?
+  creationDate: DateTime
+  locationIP: String
+  browserUsed: String
+  language: String?
+  content: String?
+  length: I64
+}
+
+node Comment {
+  id: I64 @key
+  creationDate: DateTime
+  locationIP: String
+  browserUsed: String
+  content: String
+  length: I64
+}
+
+node Tag {
+  id: I64 @key
+  name: String @unique
+  url: String
+}
+
+edge PostHasTag: Post -> Tag
+edge ReplyOfPost: Comment -> Post
+edge CommentHasCreator: Comment -> Person

@@ -37,6 +37,15 @@ pub(super) async fn graph_index_for_resolved(
         .await
 }
 
+pub(super) async fn cached_graph_index_for_resolved(
+    db: &Omnigraph,
+    resolved: &ResolvedTarget,
+    edge_types: &std::collections::HashMap<String, (String, String)>,
+    _system_columns: SystemColumns,
+) -> Option<Arc<crate::graph_index::GraphIndex>> {
+    db.runtime_cache.cached_graph_index(resolved, edge_types).await
+}
+
 pub(super) async fn ensure_indices_as(
     db: &Omnigraph,
     actor: Option<&str>,

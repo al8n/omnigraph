@@ -494,7 +494,7 @@ fn decode_body(header: &Header, payload: &[u8]) -> Result<GraphIndex> {
             let id = std::str::from_utf8(&section[d..id_end]).map_err(|_| {
                 OmniError::manifest("graph index artifact dictionary id is not UTF-8".to_string())
             })?;
-            ids.push(id.to_string());
+            ids.push(smol_str::SmolStr::new(id));
             d = id_end;
         }
         if ids.len() as u64 != dict.count {
@@ -779,7 +779,7 @@ impl ArtifactCount {
         }
     }
 
-    pub(crate) fn add_ids(&mut self, type_name: &str, ids: &[String]) {
+    pub(crate) fn add_ids(&mut self, type_name: &str, ids: &[smol_str::SmolStr]) {
         let widen = self.per_id.get(type_name).copied().unwrap_or(0);
         for id in ids {
             self.counted = self.counted.saturating_add(4 + id.len() as u64 + widen);

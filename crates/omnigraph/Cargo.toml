@@ -42,6 +42,7 @@ lance-core = { workspace = true }
 lance-select = { workspace = true }
 lance-datafusion = { workspace = true }
 ahash = { workspace = true }
+smol_str = { workspace = true }
 # The hash join's build side: the `HashTable` DataFusion's own join uses.
 hashbrown = "0.17"
 datafusion = { workspace = true }

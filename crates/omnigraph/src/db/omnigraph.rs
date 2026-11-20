@@ -3951,6 +3951,15 @@ impl Omnigraph {
         table_ops::graph_index_for_resolved(self, resolved, edge_types, system_columns).await
     }
 
+    pub(crate) async fn cached_graph_index_for_resolved(
+        &self,
+        resolved: &ResolvedTarget,
+        edge_types: &std::collections::HashMap<String, (String, String)>,
+        system_columns: SystemColumns,
+    ) -> Option<Arc<crate::graph_index::GraphIndex>> {
+        table_ops::cached_graph_index_for_resolved(self, resolved, edge_types, system_columns).await
+    }
+
     /// [`Self::ensure_indices_on_as`] on this handle's current branch,
     /// returning only what it left pending.
     pub async fn ensure_indices_as(&self, actor: Option<&str>) -> Result<Vec<PendingIndex>> {

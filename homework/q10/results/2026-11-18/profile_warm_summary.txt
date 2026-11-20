@@ -1,0 +1,90 @@
+cpu ms per second: {0: 1064, 1: 1139, 2: 1182, 3: 1148, 4: 1125, 5: 1073, 6: 1189, 7: 1146, 8: 1127, 9: 1112, 10: 1114, 11: 1134, 12: 1108, 13: 1172, 14: 356}
+span 14.33s; counting samples in [2.5s, 13.83s]
+samples=12851 cpu_time=12851 ms (all threads)
+by thread: [('tokio-rt-worker (0xac7eb48) (q10-harness, pid: 30772)', '12%'), ('tokio-rt-worker (0xac7eb4a) (q10-harness, pid: 30772)', '11%'), ('tokio-rt-worker (0xac7eb4c) (q10-harness, pid: 30772)', '9%'), ('tokio-rt-worker (0xac7eb44) (q10-harness, pid: 30772)', '8%'), ('tokio-rt-worker (0xac7eb4d) (q10-harness, pid: 30772)', '7%'), ('tokio-rt-worker (0xac7eb52) (q10-harness, pid: 30772)', '5%')]
+inclusive share:
+    0.0%  graph_index
+    0.4%  omnigraph::engine::operators::expand
+    8.9%  omnigraph::engine::operators::hash_join
+   38.0%  omnigraph::engine::operators::scan
+    0.4%  omnigraph_planner
+    0.1%  omnigraph_compiler
+    0.0%  capture_read_view
+    0.1%  lance::dataset::scanner
+   29.2%  lance_encoding
+    0.3%  lance_index
+    2.0%  lance_io
+    0.1%  lance_file
+   36.0%  datafusion
+   28.7%  arrow_
+   99.2%  tokio::runtime
+   16.4%  __psynch_cvwait
+    6.4%  malloc
+    6.1%  free
+    2.0%  memmove
+    0.1%  memcpy
+top self (leaf) frames:
+   16.4%  __psynch_cvwait
+   12.3%  __psynch_cvsignal
+    2.6%  mach_absolute_time
+    2.6%  _xzm_free_tc
+    2.0%  _xzm_malloc_tc
+    2.0%  write<u32>
+    2.0%  _platform_memmove
+    1.7%  {closure#0}<i32>
+    1.7%  from_hashes<omnigraph::engine::operators::key_groups::{impl#0}::build::{closure_env#0}>
+    1.7%  copy_nonoverlapping<u8>
+    1.4%  _RNvMNtNtNtCscINjOkzqM5n_9omnigraph6engine9operators10key_groupsNtB2_9KeyGroups8group_of
+    1.4%  _malloc_zone_malloc
+    1.4%  pread
+    1.3%  _xzm_xzone_malloc_tiny
+    1.2%  __xzm_xzone_free_to_freelist_chunk
+    1.0%  _free
+    0.8%  _platform_memset
+    0.7%  vreinterpret_u64_u8
+top inclusive omnigraph/lance frames:
+   41.1%  {closure#0}<tokio::runtime::blocking::task::BlockingTask<omnigraph::engine::operators::memory::{impl#8}::blocking_body::{async_fn#0}::{closure_env#1}<
+   40.8%  _RNvXs0_NtNtNtCs58Bk4gTAdII_5tokio7runtime8blocking4taskINtB5_12BlockingTaskNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtB1m_10W
+   31.3%  _RNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtBa_10WorkMemory13blocking_bodyuNCNCNvMNtNtBc_4scan9pipelinedNtB1I_8ScanExec17exec
+   29.9%  _RNCNCNvMNtNtNtNtCscINjOkzqM5n_9omnigraph6engine9operators4scan9pipelinedNtB8_8ScanExec17execute_pipelined00Be_
+   22.1%  {closure#0}<lance_encoding::decoder::{impl#17}::into_stream::{closure#0}::{async_block#0}::{async_block#1}::{async_block_env#0}, alloc::sync::Arc<toki
+   21.7%  _RNvMsv_NtCs4f3zHciD1Df_14lance_encoding7decoderNtB5_14NextDecodeTask10into_batch
+   21.4%  _RNvXsu_NtCs4f3zHciD1Df_14lance_encoding7decoderINtNtCslJsSqIQKwiA_5alloc5boxed3BoxDNtB5_25StructuralDecodeArrayTaskEL_ENtB5_15DecodeArrayTask6decode
+   20.7%  from_iter<lance_encoding::decoder::DecodedArray, core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::vec::into_iter::IntoIter<all
+   20.6%  try_fold<core::result::Result<lance_encoding::decoder::DecodedArray, lance_core::error::Error>, alloc::vec::into_iter::IntoIter<alloc::boxed::Box<dyn 
+   18.1%  _RNvXsR_NtNtNtCs4f3zHciD1Df_14lance_encoding9encodings7logical9primitiveNtB5_34StructuralCompositeDecodeArrayTaskNtNtBb_7decoder25StructuralDecodeArra
+   15.6%  _RNvXs3_NtCskbnh6CMV3vE_24datafusion_physical_plan6streamINtB5_24RecordBatchStreamAdapterINtNtNtNtCs8TXJz32AzOt_12futures_util6stream10try_stream11try
+   15.3%  _RNvXs3_NtCskbnh6CMV3vE_24datafusion_physical_plan6streamINtB5_24RecordBatchStreamAdapterINtNtNtNtCs8TXJz32AzOt_12futures_util6stream10try_stream10try
+   15.0%  poll_next<futures_util::stream::try_stream::try_flatten::TryFlatten<futures_util::stream::try_stream::MapOk<futures_util::stream::try_stream::try_buff
+   14.7%  poll_next<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item=core::result::Result<arrow_array::record_batch::RecordBatch, lance_core::error::Err
+   14.3%  poll_next<futures_util::stream::try_stream::try_buffered::TryBuffered<futures_util::stream::try_stream::try_unfold::TryUnfold<alloc::sync::Arc<tokio::
+   10.6%  poll_next_unpin<futures_util::stream::futures_ordered::FuturesOrdered<futures_util::future::try_future::into_future::IntoFuture<core::pin::Pin<alloc::
+   10.5%  poll_next_unpin<futures_util::stream::futures_unordered::FuturesUnordered<futures_util::stream::futures_ordered::OrderWrapper<futures_util::future::tr
+   10.0%  _RNvXs6_NtNtNtCs4f3zHciD1Df_14lance_encoding9encodings8physical4fsstNtB5_25FsstMiniBlockDecompressorNtNtBb_11compression21MiniBlockDecompressor10decom
+   10.0%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<alloc::vec::Vec<lance::dataset::blob::MaterializedBlobBatch, allo
+    9.9%  poll<futures_util::future::try_future::into_future::IntoFuture<core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result:
+    9.4%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<omnigraph::engine::operators::shape::Flow, datafusion_common::err
+    9.2%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<lance::dataset::blob::MaterializedBlobBatch, lance_core::error::E
+    8.8%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<arrow_array::record_batch::RecordBatch, lance_core::error::Error>
+    8.7%  _RNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtBa_10WorkMemory13blocking_bodyuNCNCINvMs_NtBc_5shapeNtB1J_9Streaming7produceNCNvX
+    8.6%  _RNCNvXs4_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators9hash_joinNtB7_5ProbeNtNtB9_5shape8Streamed5batch0Bd_
+    6.4%  _RNvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtB5_10WorkMemory4hold
+    6.4%  _RNCINvNtCs64IhMFS6CYr_25datafusion_common_runtime11trace_utils12trace_futureINtNtCsgtPOCBgevO_4core6result6ResultuNtNtCs8F31xVkulny_17datafusion_comm
+    5.9%  {async_fn#0}<(), omnigraph::engine::operators::scan::pipelined::{impl#0}::execute_pipelined::{closure#0}::{async_block_env#0}, omnigraph::engine::oper
+    5.6%  poll_next_unpin<futures_util::stream::futures_unordered::FuturesUnordered<futures_util::stream::futures_ordered::OrderWrapper<core::pin::Pin<alloc::bo
+    5.6%  poll<futures_util::stream::futures_ordered::FuturesOrdered<core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Res
+    4.9%  _RNvXs1_NtNtNtCs8TXJz32AzOt_12futures_util6stream6stream3mapINtB5_3MapINtNtCsgtPOCBgevO_4core3pin3PinINtNtCslJsSqIQKwiA_5alloc5boxed3BoxDNtNtCs2m0cUpd
+    4.7%  _RNCNCNCNvMNtNtNtCsexd0efLz2FW_5lance7dataset8fragment10v2_adapterNtB8_6Reader10read_tasks0s_00Be_
+    4.5%  spawn_blocking_inner<omnigraph::engine::operators::memory::{impl#8}::blocking_body::{async_fn#0}::{closure_env#1}<(), omnigraph::engine::operators::sc
+    4.3%  _RNCNCNCNvMsf_NtCs4f3zHciD1Df_14lance_encoding7decoderNtBb_27StructuralBatchDecodeStream11into_stream00s_0Bd_
+    3.9%  spawn<lance_encoding::decoder::{impl#17}::into_stream::{closure#0}::{async_block#0}::{async_block#1}::{async_block_env#0}>
+    3.9%  from_hashes<omnigraph::engine::operators::key_groups::{impl#0}::build::{closure_env#0}>
+    3.6%  poll_next<futures_util::stream::try_stream::try_unfold::TryUnfold<alloc::sync::Arc<tokio::sync::mutex::Mutex<core::pin::Pin<alloc::boxed::Box<(dyn fut
+    3.5%  _RNCNvMs_NtNtNtNtCscINjOkzqM5n_9omnigraph6engine9operators4scan9pipelinedNtB6_8Gathered4send0Be_
+    3.0%  poll_next<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item=core::result::Result<core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Fu
+    2.9%  poll_next<futures_util::stream::stream::zip::Zip<futures_util::stream::stream::map::Map<core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::St
+    2.7%  poll_next<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item=core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::res
+    2.7%  _RNvXs0_NtNtNtCs8TXJz32AzOt_12futures_util6future6future3mapINtB5_3MapINtNtCsgtPOCBgevO_4core3pin3PinINtNtCslJsSqIQKwiA_5alloc5boxed3BoxDNtNtNtB1a_6fu
+    2.6%  _RNvMs3_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtB5_14QueryResources5batch
+    2.6%  poll_next<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item=lance_table::utils::stream::ReadBatchTask> + core::marker::Send), alloc::alloc::Glo
+    2.5%  from_iter<u32, core::iter::adapters::map::Map<core::slice::iter::Iter<u32>, lance_encoding::encodings::physical::binary::{impl#4}::decompress::{closur

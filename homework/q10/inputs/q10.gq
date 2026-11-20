@@ -1,0 +1,28 @@
+// LDBC SNB Q10 (graph-benchmark-ldbc): people who directly commented on a
+// post tagged "Cate_Blanchett". Expected: 3 distinct ids
+// (6597069775789, 8796093029267, 24189255819727).
+
+// Tag-first: the selective binding is declared first, so it is the scan root.
+query q10() {
+  match {
+    $t: Tag { name: "Cate_Blanchett" }
+    $post postHasTag $t
+    $c replyOfPost $post
+    $c commentHasCreator $p
+  }
+  return distinct { $p.id }
+}
+
+// Cypher order: MATCH (c:Comment)-[:replyOfPost]->(post:Post)-[:postHasTag]->(t:Tag),
+// (c)-[:commentHasCreator]->(p:Person) WHERE t.name = "Cate_Blanchett".
+// Declaring $c first makes Comment the scan root; the Tag filter is deferred.
+query q10_cypher_order() {
+  match {
+    $c: Comment
+    $c replyOfPost $post
+    $post postHasTag $t
+    $t: Tag { name: "Cate_Blanchett" }
+    $c commentHasCreator $p
+  }
+  return distinct { $p.id }
+}

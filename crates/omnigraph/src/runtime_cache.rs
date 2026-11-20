@@ -140,6 +140,18 @@ impl RuntimeCache {
         cache.artifact_negative.retain(untouched);
     }
 
+    /// Non-building lookup: the cached index for this scope (entry or shelf),
+    /// or `None`. Never builds, reads storage, or inserts.
+    pub(crate) async fn cached_graph_index(
+        &self,
+        resolved: &ResolvedTarget,
+        edge_types: &HashMap<String, (String, String)>,
+    ) -> Option<Arc<GraphIndex>> {
+        let key = graph_index_cache_key(resolved, edge_types);
+        let mut cache = self.graph_indices.lock().await;
+        cache.entries.get(&key).cloned()
+    }
+
     /// Build (or fetch) the CSR/CSC graph index scoped to exactly `edge_types` —
     /// the edge types the query actually traverses, not every edge type in the
     /// catalog. Scoping is what keeps a single-edge join (`$x identifiesPerson

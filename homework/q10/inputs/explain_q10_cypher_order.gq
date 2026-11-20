@@ -1,0 +1,10 @@
+explain query q10_cypher_order() {
+  match {
+    $c: Comment
+    $c replyOfPost $post
+    $post postHasTag $t
+    $t: Tag { name: "Cate_Blanchett" }
+    $c commentHasCreator $p
+  }
+  return distinct { $p.id }
+}

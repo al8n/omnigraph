@@ -1,0 +1,15 @@
+[package]
+name = "q10-harness"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "q10-harness"
+path = "src/main.rs"
+
+[dependencies]
+omnigraph = { package = "omnigraph-engine", path = "../omnigraph" }
+omnigraph-compiler = { path = "../omnigraph-compiler" }
+serde_json = { workspace = true }
+tokio = { workspace = true }

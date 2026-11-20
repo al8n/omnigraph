@@ -382,6 +382,24 @@ impl GraphIndexHandle {
     pub(super) fn is_built(&self) -> bool {
         matches!(self.cell.get(), Some(Some(_)))
     }
+
+    /// Built for this query, or already held by the cross-query runtime cache
+    /// (adopted into the cell without ever building).
+    pub(super) async fn is_warm(&self) -> bool {
+        if self.is_built() {
+            return true;
+        }
+        if let GraphIndexBuilder::Cached(db, resolved, edge_types, system_columns) = &self.builder {
+            if let Some(index) = db
+                .cached_graph_index_for_resolved(resolved, edge_types, *system_columns)
+                .await
+            {
+                let _ = self.cell.set(Some(index));
+                return true;
+            }
+        }
+        false
+    }
 }
 
 /// The planner's coverage value for the runtime correction. A failed coverage
@@ -492,7 +510,11 @@ fn source_node_key(source: usize, node: u32) -> u64 {
 
 /// The destination column of one chunk: `dense` resolved through `ids`, the
 /// dictionary of the walk's destination space, charged to `memory` first.
-fn destination_column(dense: &[u32], ids: &[String], memory: &WorkMemory) -> Result<ArrayRef> {
+fn destination_column(
+    dense: &[u32],
+    ids: &[smol_str::SmolStr],
+    memory: &WorkMemory,
+) -> Result<ArrayRef> {
     // One pass checks every id against the dictionary and sums the bytes;
     // the column is then built straight from the dictionary.
     let mut bytes = 0usize;
@@ -521,7 +543,7 @@ fn take_pending_pairs(
     emitted_src: &mut Vec<u32>,
     emitted_dst: &mut Vec<u32>,
     emission_memory: &mut WorkMemory,
-    ids: &[String],
+    ids: &[smol_str::SmolStr],
     memory: &WorkMemory,
     chunk_rows: usize,
 ) -> Result<ExpandedPairs> {
@@ -697,8 +719,12 @@ impl ModeOrigin {
     }
 }
 
-/// Correct the recorded mode for the observed frontier and warm CSR, probing
-/// coverage only for legacy plans. The indexed start retains its per-hop policy.
+/// Correct the recorded mode for the observed frontier and the CSR this run
+/// has built, probing coverage only for legacy plans. Both re-costings price
+/// the CSR by `csr_warm` (built this query or held by the runtime cache), never by the plan's `csr_cached`: that
+/// is the planner's prediction that an earlier Expand builds the CSR, and that
+/// Expand may itself have switched to the indexed path. The indexed start
+/// retains its per-hop policy.
 pub(super) async fn decide_expand_start(
     frontier_rows: Option<usize>,
     graph_index: &GraphIndexHandle,
@@ -720,13 +746,14 @@ pub(super) async fn decide_expand_start(
         )));
     }
 
+    let csr_warm = graph_index.is_warm().await;
     let observed_indexed = match (&named.origin, frontier_rows, named.mode) {
         (ModeOrigin::Costed(inputs), Some(observed), ExpandMode::Csr)
             if (observed as u64) < inputs.frontier_rows =>
         {
             let mut inputs = inputs.clone();
             inputs.frontier_rows = observed as u64;
-            inputs.csr_cached = inputs.csr_cached || graph_index.is_built();
+            inputs.csr_cached = csr_warm;
             choose_expand_mode(&inputs) == ExpandMode::IndexedScan
         }
         _ => false,
@@ -785,7 +812,7 @@ pub(super) async fn decide_expand_start(
             if let Some(coverage) = &coverage {
                 inputs.coverage = coverage_for_decision(coverage);
             }
-            inputs.csr_cached = inputs.csr_cached || graph_index.is_built();
+            inputs.csr_cached = csr_warm;
             Some(inputs)
         }
         ModeOrigin::Pinned | ModeOrigin::Uncosted => None,
@@ -1541,7 +1568,7 @@ where
                         adj_rev.map(|a| a.neighbors(node)).unwrap_or(&[]),
                     ),
                 };
-                let ids: &[String] = match &active {
+                let ids: &[smol_str::SmolStr] = match &active {
                     ActiveExpandSource::Indexed(src) => src.interner.ids(),
                     ActiveExpandSource::Csr(CsrSource { dst_idx, .. }) => dst_idx.ids(),
                 };
@@ -1604,7 +1631,7 @@ where
     let destination = if emitted_src.is_empty() {
         None
     } else {
-        let ids: &[String] = match &active {
+        let ids: &[smol_str::SmolStr] = match &active {
             ActiveExpandSource::Indexed(src) => src.interner.ids(),
             ActiveExpandSource::Csr(CsrSource { dst_idx, .. }) => dst_idx.ids(),
         };
