@@ -1,0 +1,114 @@
+diff --git a/crates/omnigraph-planner/src/optimizer.rs b/crates/omnigraph-planner/src/optimizer.rs
+index e661949a..b646d224 100644
+--- a/crates/omnigraph-planner/src/optimizer.rs
++++ b/crates/omnigraph-planner/src/optimizer.rs
+@@ -2223,8 +2223,27 @@ fn projection_pushdown(
+             demands.entry(binding).or_default().identity = true;
+         }
+     }
++    let mut block_nodes: Vec<LogicalId> = plan
++        .live()
++        .filter_map(|(_, node)| match node {
++            LogicalNode::AntiJoin { inner, .. } => Some(*inner),
++            _ => None,
++        })
++        .collect();
++    let mut in_block = HashSet::new();
++    while let Some(id) = block_nodes.pop() {
++        if in_block.insert(id) {
++            block_nodes.extend(plan.node(id).map(LogicalNode::inputs).unwrap_or_default());
++        }
++    }
+     for (id, binding, node_type) in scans {
+         let demand = demands.get(&binding);
++        if !in_block.contains(&id)
++            && let Some(input) = redundant_destination(plan, id, demand, &node_type.columns.id)
++        {
++            plan.splice_out(id, input);
++            continue;
++        }
+         let whole_object = demand.map_or_else(
+             || {
+                 matches!(
+@@ -2268,6 +2287,53 @@ fn projection_pushdown(
+     Ok(true)
+ }
+ 
++/// The expansion under a traversal destination scan that can be dropped:
++/// unfiltered, its binding read for nothing beyond its id, which the
++/// expansion already carries, outside any correlated block, over one named
++/// directed edge type, which fixes the destination type. Endpoint integrity
++/// (inserts check endpoints, node deletes cascade to their edges) means
++/// every destination the expansion reaches exists, so the scan neither adds
++/// a needed column nor removes a row.
++fn redundant_destination(
++    plan: &LogicalPlan,
++    id: LogicalId,
++    demand: Option<&Demand>,
++    id_column: &str,
++) -> Option<LogicalId> {
++    let Some(LogicalNode::TableScan {
++        input: Some(input),
++        spec,
++    }) = plan.node(id)
++    else {
++        return None;
++    };
++    let Some(LogicalNode::Expand {
++        dst,
++        edges,
++        min_hops,
++        ..
++    }) = plan.node(*input)
++    else {
++        return None;
++    };
++    let unread = demand.is_some_and(|demand| {
++        !demand.entity
++            && demand
++                .properties
++                .iter()
++                .all(|property| property == id_column)
++    });
++    (unread
++        && spec.filter.is_none()
++        && spec.runtime_filter.is_none()
++        && spec.binding.as_ref() == Some(dst)
++        && *min_hops >= 1
++        && edges
++            .named()
++            .is_some_and(|member| member.direction != Direction::Both))
++    .then_some(*input)
++}
++
+ /// What one binding's scan must read, gathered from every node of the tree.
+ /// `identity` is the id column, read only when something keys rows by it.
+ #[derive(Debug, Default)]
+diff --git a/crates/omnigraph-planner/src/validate/invariants.rs b/crates/omnigraph-planner/src/validate/invariants.rs
+index 285e8e25..06651798 100644
+--- a/crates/omnigraph-planner/src/validate/invariants.rs
++++ b/crates/omnigraph-planner/src/validate/invariants.rs
+@@ -312,6 +312,23 @@ impl Requirements {
+                     spec.binding.as_deref() == Some(name.as_str())
+                         && spec.table.node_type_name() == Some(type_name.as_str())
+                 }
++                // A destination whose scan the planner dropped: one named
++                // directed edge type fixes its type.
++                (
++                    Some(PhysicalNode::Expand {
++                        dst,
++                        dst_type,
++                        edges,
++                        ..
++                    }),
++                    BoundVariable::Node { type_name },
++                ) => {
++                    dst == name
++                        && dst_type == type_name
++                        && edges.named().is_some_and(|member| {
++                            member.direction != omnigraph_compiler::types::Direction::Both
++                        })
++                }
+                 (
+                     Some(PhysicalNode::Expand {
+                         edge_binding: Some(edge),

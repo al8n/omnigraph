@@ -1,0 +1,9 @@
+explain query q10() {
+  match {
+    $t: Tag { name: "Cate_Blanchett" }
+    $post postHasTag $t
+    $c replyOfPost $post
+    $c commentHasCreator $p
+  }
+  return distinct { $p.id }
+}

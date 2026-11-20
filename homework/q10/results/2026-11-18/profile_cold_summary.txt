@@ -1,0 +1,86 @@
+samples=1578 cpu_time=1578 ms (all threads)
+by thread: [('tokio-rt-worker (0xac8093a) (q10-harness, pid: 32699)', '20%'), ('tokio-rt-worker (0xac8093b) (q10-harness, pid: 32699)', '12%'), ('tokio-rt-worker (0xac8093c) (q10-harness, pid: 32699)', '12%'), ('tokio-rt-worker (0xac80937) (q10-harness, pid: 32699)', '10%'), ('Main Thread (0xac806bc) (q10-harness, pid: 32699)', '9%'), ('tokio-rt-worker (0xac8093d) (q10-harness, pid: 32699)', '9%')]
+inclusive share:
+   18.1%  graph_index
+   68.9%  omnigraph::engine::operators::expand
+    1.3%  omnigraph::engine::operators::hash_join
+    4.8%  omnigraph::engine::operators::scan
+    0.1%  omnigraph_planner
+    0.1%  omnigraph_compiler
+    0.6%  lance::dataset::scanner
+   12.4%  lance_encoding
+   10.6%  lance_index
+    1.5%  lance_io
+    0.1%  lance_file
+   73.3%  datafusion
+    6.2%  arrow_
+   90.9%  tokio::runtime
+    1.4%  __psynch_cvwait
+    5.8%  malloc
+    7.5%  free
+    2.0%  memmove
+top self (leaf) frames:
+    8.2%  _platform_memcmp
+    7.4%  _RINvYNtNtNtCsa9BKTri5B3M_3std4hash6random11RandomStateNtNtCsgtPOCBgevO_4core4hash11BuildHasher8hash_oneRNtNtC
+    6.6%  _RNvXs3_NtNtCsgtPOCBgevO_4core4hash3sipINtB5_6HasherNtB5_11Sip13RoundsENtB7_6Hasher5writeCscINjOkzqM5n_9omnigr
+    3.9%  __xzm_xzone_free_to_freelist_chunk
+    3.7%  _RINvYNtNtNtCsa9BKTri5B3M_3std4hash6random11RandomStateNtNtCsgtPOCBgevO_4core4hash11BuildHasher8hash_oneReECsc
+    3.2%  copy_nonoverlapping<u8>
+    3.1%  _RNvXs3_NtNtCsgtPOCBgevO_4core4hash3sipINtB5_6HasherNtB5_11Sip13RoundsENtB7_6Hasher5writeCskyH5ctmNR2k_11lance
+    2.2%  _xzm_malloc_tc
+    2.0%  _platform_memmove
+    2.0%  finish<core::hash::sip::Sip13Rounds>
+    2.0%  _xzm_free_tc
+    1.9%  likely
+    1.8%  non_null<alloc::alloc::Global, u8>
+    1.7%  __psynch_cvsignal
+    1.5%  move_next
+    1.5%  trailing_zeros
+    1.4%  __psynch_cvwait
+    1.4%  write<u32>
+top inclusive omnigraph/lance frames:
+   74.5%  _RNvXs0_NtNtNtCs58Bk4gTAdII_5tokio7runtime8blocking4taskINtB5_12BlockingTaskNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtB1m_10W
+   74.5%  {closure#0}<tokio::runtime::blocking::task::BlockingTask<omnigraph::engine::operators::memory::{impl#8}::blocking_body::{async_fn#0}::{closure_env#1}<
+   70.3%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<omnigraph::engine::operators::shape::Flow, datafusion_common::err
+   68.8%  _RNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtBa_10WorkMemory13blocking_bodyuNCNCINvMs_NtBc_5shapeNtB1J_9Streaming7produceNCNvN
+   68.8%  _RNCNvXs0_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators10single_hopNtB7_9SingleHopNtNtB9_5shape8Streamed5batch0Bd_
+   11.3%  {closure#0}<lance_encoding::decoder::{impl#17}::into_stream::{closure#0}::{async_block#0}::{async_block#1}::{async_block_env#0}, alloc::sync::Arc<toki
+   11.3%  try_fold<core::result::Result<lance_encoding::decoder::DecodedArray, lance_core::error::Error>, alloc::vec::into_iter::IntoIter<alloc::boxed::Box<dyn 
+   11.3%  from_iter<lance_encoding::decoder::DecodedArray, core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::vec::into_iter::IntoIter<all
+   11.3%  _RNvXsu_NtCs4f3zHciD1Df_14lance_encoding7decoderINtNtCslJsSqIQKwiA_5alloc5boxed3BoxDNtB5_25StructuralDecodeArrayTaskEL_ENtB5_15DecodeArrayTask6decode
+   11.3%  _RNvMsv_NtCs4f3zHciD1Df_14lance_encoding7decoderNtB5_14NextDecodeTask10into_batch
+    9.8%  _RNvXsR_NtNtNtCs4f3zHciD1Df_14lance_encoding9encodings7logical9primitiveNtB5_34StructuralCompositeDecodeArrayTaskNtNtBb_7decoder25StructuralDecodeArra
+    8.4%  get_mut<alloc::string::String, omnigraph::graph_index::TypeIndex, std::hash::random::RandomState, alloc::alloc::Global, alloc::string::String>
+    7.4%  _RINvYNtNtNtCsa9BKTri5B3M_3std4hash6random11RandomStateNtNtCsgtPOCBgevO_4core4hash11BuildHasher8hash_oneRNtNtCslJsSqIQKwiA_5alloc6string6StringECskyH5
+    7.1%  drop_glue<(alloc::string::String, omnigraph::graph_index::TypeIndex)>
+    7.1%  drop_glue<hashbrown::raw::RawTable<(alloc::string::String, omnigraph::graph_index::TypeIndex), alloc::alloc::Global>>
+    7.1%  drop_in_place<(omnigraph::runtime_cache::GraphIndexCacheKey, alloc::sync::Arc<omnigraph::graph_index::GraphIndex, alloc::alloc::Global>)>
+    7.1%  drop_glue<core::cell::UnsafeCell<omnigraph::runtime_cache::GraphIndexCache>>
+    7.1%  drop_glue<omnigraph::db::omnigraph::Omnigraph>
+    7.1%  drop<omnigraph::db::omnigraph::Omnigraph, alloc::alloc::Global>
+    6.6%  _RNvXs3_NtNtCsgtPOCBgevO_4core4hash3sipINtB5_6HasherNtB5_11Sip13RoundsENtB7_6Hasher5writeCscINjOkzqM5n_9omnigraph
+    6.0%  _RINvNtCsgtPOCBgevO_4core3ptr9drop_glueNtNtCscINjOkzqM5n_9omnigraph11graph_index9TypeIndexEBE_
+    5.5%  _RNvXs6_NtNtNtCs4f3zHciD1Df_14lance_encoding9encodings8physical4fsstNtB5_25FsstMiniBlockDecompressorNtNtBb_11compression21MiniBlockDecompressor10decom
+    4.1%  _RNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtBa_10WorkMemory13blocking_bodyuNCNCNvMNtNtBc_4scan9pipelinedNtB1I_8ScanExec17exec
+    3.8%  _RNCNCNvMNtNtNtNtCscINjOkzqM5n_9omnigraph6engine9operators4scan9pipelinedNtB8_8ScanExec17execute_pipelined00Be_
+    3.7%  _RINvYNtNtNtCsa9BKTri5B3M_3std4hash6random11RandomStateNtNtCsgtPOCBgevO_4core4hash11BuildHasher8hash_oneReECscINjOkzqM5n_9omnigraph
+    3.1%  _RNvXs3_NtNtCsgtPOCBgevO_4core4hash3sipINtB5_6HasherNtB5_11Sip13RoundsENtB7_6Hasher5writeCskyH5ctmNR2k_11lance_index
+    2.5%  _RNvXs3_NtCskbnh6CMV3vE_24datafusion_physical_plan6streamINtB5_24RecordBatchStreamAdapterINtNtNtNtCs8TXJz32AzOt_12futures_util6stream10try_stream11try
+    2.3%  poll_next<futures_util::stream::try_stream::try_flatten::TryFlatten<futures_util::stream::try_stream::MapOk<futures_util::stream::try_stream::try_buff
+    2.3%  poll_next<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item=core::result::Result<arrow_array::record_batch::RecordBatch, lance_core::error::Err
+    2.2%  poll_next<futures_util::stream::try_stream::try_buffered::TryBuffered<futures_util::stream::try_stream::try_unfold::TryUnfold<alloc::sync::Arc<tokio::
+    1.8%  _RNvXs3_NtCskbnh6CMV3vE_24datafusion_physical_plan6streamINtB5_24RecordBatchStreamAdapterINtNtNtNtCs8TXJz32AzOt_12futures_util6stream10try_stream10try
+    1.6%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<alloc::vec::Vec<lance::dataset::blob::MaterializedBlobBatch, allo
+    1.6%  poll_next_unpin<futures_util::stream::futures_unordered::FuturesUnordered<futures_util::stream::futures_ordered::OrderWrapper<futures_util::future::tr
+    1.6%  poll_next_unpin<futures_util::stream::futures_ordered::FuturesOrdered<futures_util::future::try_future::into_future::IntoFuture<core::pin::Pin<alloc::
+    1.5%  poll<futures_util::future::try_future::into_future::IntoFuture<core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result:
+    1.5%  from_iter<u32, core::iter::adapters::map::Map<core::slice::iter::Iter<u32>, lance_encoding::encodings::physical::binary::{impl#4}::decompress::{closur
+    1.3%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<arrow_array::record_batch::RecordBatch, lance_core::error::Error>
+    1.3%  poll<alloc::boxed::Box<(dyn core::future::future::Future<Output=core::result::Result<lance::dataset::blob::MaterializedBlobBatch, lance_core::error::E
+    1.3%  _RNCNvXs4_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators9hash_joinNtB7_5ProbeNtNtB9_5shape8Streamed5batch0Bd_
+    1.3%  _RNCNCINvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtBa_10WorkMemory13blocking_bodyuNCNCINvMs_NtBc_5shapeNtB1J_9Streaming7produceNCNvX
+    1.3%  _RNvMsn_NtCs4f3zHciD1Df_14lance_encoding4dataNtB5_9DataBlock15into_arrow_impl
+    1.3%  _RNvMs_NtCscINjOkzqM5n_9omnigraph11graph_indexNtB4_8CsrIndex5build
+    1.1%  {closure#0}<tokio::runtime::blocking::task::BlockingTask<lance_io::local::{impl#2}::get_range::{async_block#0}::{async_block#0}::{closure_env#0}>, tok
+    1.0%  _RNvMs6_NtNtNtCscINjOkzqM5n_9omnigraph6engine9operators6memoryNtB5_10WorkMemory4hold
+    1.0%  _RNvYINtNtCs4f3zHciD1Df_14lance_encoding4data29VariableWidthDataBlockBuilderlENtB5_20DataBlockBuilderImpl6appendB7_
