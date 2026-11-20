@@ -344,7 +344,7 @@ impl<'g> Source<'g> {
                     .map(|row| intern(&mut interner, src_ids.value(row), hop_memory).map(Some))
                     .collect::<crate::error::Result<Vec<_>>>()
                     .map_err(external)?;
-                let keys = interner.ids().to_vec();
+                let keys: Vec<String> = interner.ids().iter().map(|s| s.to_string()).collect();
                 hop_memory.entries::<String>(keys.len())?;
                 hop_memory.string(keys.iter().map(String::len).sum())?;
                 let mut map = HashMap::new();
@@ -372,12 +372,12 @@ impl<'g> Source<'g> {
 }
 
 enum DestinationIds<'g> {
-    Borrowed(&'g [String]),
+    Borrowed(&'g [smol_str::SmolStr]),
     Owned(TypeIndex),
 }
 
 impl DestinationIds<'_> {
-    fn as_slice(&self) -> &[String] {
+    fn as_slice(&self) -> &[smol_str::SmolStr] {
         match self {
             Self::Borrowed(ids) => ids,
             Self::Owned(index) => index.ids(),
@@ -442,7 +442,7 @@ impl Walk {
         neighbours: &Neighbours<'_>,
         cursor: &mut Cursor,
         row_bytes: &[usize],
-        ids: &[String],
+        ids: &[smol_str::SmolStr],
         byte_limit: usize,
     ) -> Stop {
         let mut bytes = 0usize;
@@ -486,7 +486,7 @@ impl Walk {
     async fn flush(
         &mut self,
         batch: &RecordBatch,
-        ids: &[String],
+        ids: &[smol_str::SmolStr],
         memory: &Arc<WorkMemory>,
         sender: &BatchSender,
         schema: &SchemaRef,

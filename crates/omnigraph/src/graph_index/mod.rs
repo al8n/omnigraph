@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use arrow_array::StringArray;
 use futures::TryStreamExt;
 use omnigraph_compiler::SystemColumns;
+use smol_str::SmolStr;
 
 use crate::db::Snapshot;
 use crate::error::{OmniError, Result};
@@ -12,15 +13,23 @@ use crate::error::{OmniError, Result};
 /// Dense u32 mapping for a single node type: String ID ↔ dense index.
 #[derive(Debug, Clone)]
 pub struct TypeIndex {
-    id_to_dense: HashMap<String, u32>,
-    dense_to_id: Vec<String>,
+    id_to_dense: HashMap<SmolStr, u32, ahash::RandomState>,
+    dense_to_id: Vec<SmolStr>,
 }
 
 impl TypeIndex {
     pub(crate) fn new() -> Self {
         Self {
-            id_to_dense: HashMap::new(),
+            id_to_dense: HashMap::default(),
             dense_to_id: Vec::new(),
+        }
+    }
+
+    /// An empty index with room for `n` ids in both containers.
+    pub(crate) fn with_capacity(n: usize) -> Self {
+        Self {
+            id_to_dense: HashMap::with_capacity_and_hasher(n, Default::default()),
+            dense_to_id: Vec::with_capacity(n),
         }
     }
 
@@ -30,8 +39,9 @@ impl TypeIndex {
             return idx;
         }
         let idx = self.dense_to_id.len() as u32;
-        self.dense_to_id.push(id.to_string());
-        self.id_to_dense.insert(id.to_string(), idx);
+        let owned = SmolStr::new(id);
+        self.dense_to_id.push(owned.clone());
+        self.id_to_dense.insert(owned, idx);
         idx
     }
 
@@ -40,7 +50,7 @@ impl TypeIndex {
     }
 
     pub fn to_id(&self, dense: u32) -> Option<&str> {
-        self.dense_to_id.get(dense as usize).map(|s| s.as_str())
+        self.dense_to_id.get(dense as usize).map(SmolStr::as_str)
     }
 
     // The size of the dense id space, consumed as a CSR row width; emptiness is
@@ -51,14 +61,14 @@ impl TypeIndex {
     }
 
     /// The dense-ordered id dictionary (index `i` holds the id of dense `i`).
-    pub(crate) fn ids(&self) -> &[String] {
+    pub(crate) fn ids(&self) -> &[SmolStr] {
         &self.dense_to_id
     }
 
     /// Rebuild from a dense-ordered dictionary (persisted-artifact load).
     /// Duplicate ids would silently alias two dense slots, so they are refused.
-    pub(crate) fn from_ids(ids: Vec<String>) -> Result<Self> {
-        let mut id_to_dense = HashMap::with_capacity(ids.len());
+    pub(crate) fn from_ids(ids: Vec<SmolStr>) -> Result<Self> {
+        let mut id_to_dense = HashMap::with_capacity_and_hasher(ids.len(), Default::default());
         for (dense, id) in ids.iter().enumerate() {
             if id_to_dense.insert(id.clone(), dense as u32).is_some() {
                 return Err(OmniError::manifest(format!(
@@ -207,13 +217,37 @@ impl GraphIndex {
         // keys `GraphIndexCacheKey` on each edge table's physical identity
         // `(table_key, version, table_branch, e_tag)` so a lazy-fork branch reuses
         // main's built index. If you read node tables, schema, or other state here,
-        // add it to that key or the cache will serve a stale index.
+        // add it to that key or the cache will serve a stale index. Capacity hints
+        // below read node-table manifest row counts but never change the topology.
         let mut type_indices: HashMap<String, TypeIndex> = HashMap::new();
         let mut csr = HashMap::new();
         let mut csc = HashMap::new();
 
         // Phase 1: Scan all edges, build TypeIndices and collect edge pairs
         let mut edge_pairs: HashMap<String, Vec<(u32, u32)>> = HashMap::new();
+
+        // Capacity hints from manifest row counts only (never storage reads).
+        let count_of = |key: String| -> usize {
+            snapshot
+                .dataset(&key)
+                .map(|e| usize::try_from(e.entity_count).unwrap_or(0))
+                .unwrap_or(0)
+        };
+        let mut edge_touch: HashMap<&str, usize> = HashMap::new();
+        for (edge_name, (from_type, to_type)) in edge_types.iter() {
+            let n = count_of(format!("edge:{}", edge_name));
+            *edge_touch.entry(from_type.as_str()).or_insert(0) += n;
+            if to_type != from_type {
+                *edge_touch.entry(to_type.as_str()).or_insert(0) += n;
+            }
+        }
+        let type_capacity = |type_name: &str| -> usize {
+            let nodes = count_of(format!("node:{}", type_name));
+            if nodes == 0 {
+                return 0;
+            }
+            nodes.min(edge_touch.get(type_name).copied().unwrap_or(0))
+        };
 
         let mut __dst_e1: Vec<_> = edge_types.iter().collect();
         __dst_e1.sort_by(|a, b| a.0.cmp(b.0));
@@ -235,12 +269,12 @@ impl GraphIndex {
 
             type_indices
                 .entry(from_type.clone())
-                .or_insert_with(TypeIndex::new);
+                .or_insert_with(|| TypeIndex::with_capacity(type_capacity(from_type)));
             type_indices
                 .entry(to_type.clone())
-                .or_insert_with(TypeIndex::new);
+                .or_insert_with(|| TypeIndex::with_capacity(type_capacity(to_type)));
 
-            let mut edges: Vec<(u32, u32)> = Vec::new();
+            let mut edges: Vec<(u32, u32)> = Vec::with_capacity(count_of(table_key.clone()));
             while let Some(batch) = batches.try_next().await.map_err(OmniError::storage)? {
                 let from_before = type_indices[from_type].len();
                 let to_before = type_indices[to_type].len();
